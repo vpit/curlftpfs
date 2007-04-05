@@ -3,6 +3,7 @@ depcomp
 
 aclocal.m4
 autom4te.cache
+compile
 config.*
 configure
 install-sh
