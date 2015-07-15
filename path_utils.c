@@ -6,6 +6,10 @@
     See the file COPYING.
 */
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
+#endif
+
 #include "path_utils.h"
 #include "charset_utils.h"
 #include "ftpfs.h"
