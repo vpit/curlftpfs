@@ -480,7 +480,7 @@ static size_t write_data_bg(void *ptr, size_t size, size_t nmemb, void *data) {
   if (fh->eof)
     return 0;
 
-  DEBUG(2, "write_data_bg: %d %zd\n", to_copy, fh->stream_buf.len);
+  DEBUG(2, "write_data_bg: %d %zu\n", to_copy, fh->stream_buf.len);
   if (to_copy > fh->stream_buf.len)
     to_copy = fh->stream_buf.len;
 
