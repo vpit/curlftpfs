@@ -506,7 +506,6 @@ int write_thread_ctr = 0;
 
 static void *ftpfs_write_thread(void *data) {
   struct ftpfs_file *fh = data;
-  char range[15];
   CURLcode curl_res;
 
   DEBUG(2, "enter streaming write thread #%d path=%s pos=%lld\n", ++write_thread_ctr, fh->full_path, fh->pos);
@@ -525,6 +524,7 @@ static void *ftpfs_write_thread(void *data) {
   if (fh->pos > 0) {
     /* resuming a streaming write */
     /*
+    char range[15];
     snprintf(range, 15, "%lld-", (long long) fh->pos);
     curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RANGE, range);
     */
@@ -632,6 +632,8 @@ static void free_ftpfs_file(struct ftpfs_file *fh) {
   free(fh);
 }
 
+#if 0
+
 static int buffer_file(struct ftpfs_file *fh) {
   CURLcode curl_res;
   /* If we want to write to the file, we have to load it all at once,
@@ -650,6 +652,8 @@ static int buffer_file(struct ftpfs_file *fh) {
 
   return 0;
 }
+
+#endif
 
 static int create_empty_file(const char * path)
 {
