@@ -14,6 +14,7 @@
 #include "charset_utils.h"
 #include "ftpfs.h"
 
+#include <limits.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -106,24 +107,31 @@ char* get_dir_path(const char* path) {
   char *ret, *encoded;
   char* converted_path = NULL;
   const char *lastdir;
+  size_t lastdir_off;
 
   ++path;
 
   lastdir = strrchr(path, '/');
-  if (lastdir == NULL) lastdir = path;
+  if (lastdir == NULL) {
+   lastdir = path;
+   lastdir_off = 0;
+  } else {
+   lastdir_off = lastdir - path;
+  }
 
-  if (ftpfs.codepage && (lastdir - path > 0)) {
-    converted_path = g_strndup(path, lastdir - path);
+  if (ftpfs.codepage && lastdir_off) {
+    converted_path = g_strndup(path, lastdir_off);
     convert_charsets(ftpfs.iocharset, ftpfs.codepage, &converted_path);
     path = converted_path;
-    lastdir = path + strlen(path);
+    lastdir_off = strlen(path);
+    lastdir = path + lastdir_off;
   }
 
   ret = g_strdup_printf("%s%.*s%s",
                         ftpfs.host,
-                        lastdir - path,
+                        lastdir_off > INT_MAX ? INT_MAX : ((int) lastdir_off),
                         path,
-                        lastdir - path ? "/" : "");
+                        lastdir_off ? "/" : "");
 
   free(converted_path);
 
