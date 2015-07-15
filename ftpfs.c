@@ -6,6 +6,10 @@
     See the file COPYING.
 */
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
+#endif
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -191,7 +195,7 @@ static struct ftpfs_file *get_ftpfs_file(struct fuse_file_info *fi)
 
 static void cancel_previous_multi()
 {
-  //curl_multi_cleanup(ftpfs.multi);
+  /* curl_multi_cleanup(ftpfs.multi); */
 
   if (!ftpfs.attached_to_multi) return;
 
@@ -340,7 +344,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
   if ((fh->buf.len < size + offset - fh->buf.begin_offset) ||
       offset < fh->buf.begin_offset ||
       offset > fh->buf.begin_offset + fh->buf.len) {
-    // We can't answer this from cache
+    /* We can't answer this from cache */
     if (ftpfs.current_fh != fh ||
         offset < fh->buf.begin_offset ||
         offset > fh->buf.begin_offset + fh->buf.len ||
@@ -431,7 +435,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
     fh->last_offset = offset + size;
   }
 
-  // Check if the buffer is growing and we can delete a part of it
+  /* Check if the buffer is growing and we can delete a part of it */
   if (fh->can_shrink && fh->buf.len > MAX_BUFFER_LEN) {
     DEBUG(2, "Shrinking buffer from %zu to %zu bytes\n",
           fh->buf.len, to_copy - size);
@@ -513,12 +517,14 @@ static void *ftpfs_write_thread(void *data) {
 
   if (fh->pos > 0) {
     /* resuming a streaming write */
-    //snprintf(range, 15, "%lld-", (long long) fh->pos);
-    //curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RANGE, range);
+    /*
+    snprintf(range, 15, "%lld-", (long long) fh->pos);
+    curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RANGE, range);
+    */
 
 	curl_easy_setopt_or_die(fh->write_conn, CURLOPT_APPEND, 1);
 
-	//curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)fh->pos);
+	/*curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)fh->pos); */
   }
 
   CURLcode curl_res = curl_easy_perform(fh->write_conn);
@@ -620,9 +626,9 @@ static void free_ftpfs_file(struct ftpfs_file *fh) {
 }
 
 static int buffer_file(struct ftpfs_file *fh) {
-  // If we want to write to the file, we have to load it all at once,
-  // modify it in memory and then upload it as a whole as most FTP servers
-  // don't support resume for uploads.
+  /* If we want to write to the file, we have to load it all at once,
+     modify it in memory and then upload it as a whole as most FTP servers
+     don't support resume for uploads. */
   pthread_mutex_lock(&ftpfs.lock);
   cancel_previous_multi();
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, fh->full_path);
@@ -731,7 +737,7 @@ static int ftpfs_open_common(const char* path, mode_t mode,
     if (fi->flags & O_CREAT) {
       err = ftpfs_mknod(path, (mode & 07777) | S_IFREG, 0);
     } else {
-      // If it's read-only, we can load the file a bit at a time, as necessary.
+      /* If it's read-only, we can load the file a bit at a time, as necessary*/
       DEBUG(1, "opening %s O_RDONLY\n", path);
       fh->can_shrink = 1;
       size_t size = ftpfs_read_chunk(fh->full_path, NULL, 1, 0, fi, 0);
@@ -868,8 +874,7 @@ static int ftpfs_mknod(const char* path, mode_t mode, dev_t rdev) {
 static int ftpfs_chmod(const char* path, mode_t mode) {
   int err = 0;
 
-  // We can only process a subset of the mode - so strip
-  // to supported subset
+  /* We can only process a subset of the mode - so strip to supported subset */
   int mode_c = mode - (mode / 0x1000 * 0x1000);
 
   struct curl_slist* header = NULL;
@@ -1361,12 +1366,12 @@ static int ftpfs_statfs(const char *path, struct statfs *buf)
 
 static struct fuse_cache_operations ftpfs_oper = {
   .oper = {
-//    .init       = ftpfs_init,
+/*    .init       = ftpfs_init, */
     .getattr    = ftpfs_getattr,
     .readlink   = ftpfs_readlink,
     .mknod      = ftpfs_mknod,
     .mkdir      = ftpfs_mkdir,
-//    .symlink    = ftpfs_symlink,
+/*    .symlink    = ftpfs_symlink, */
     .unlink     = ftpfs_unlink,
     .rmdir      = ftpfs_rmdir,
     .rename     = ftpfs_rename,
@@ -1384,7 +1389,7 @@ static struct fuse_cache_operations ftpfs_oper = {
 #if FUSE_VERSION >= 25
     .create     = ftpfs_create,
     .ftruncate  = ftpfs_ftruncate,
-//    .fgetattr   = ftpfs_fgetattr,
+/*    .fgetattr   = ftpfs_fgetattr, */
 #endif
   },
   .cache_getdir = ftpfs_getdir,
@@ -1530,14 +1535,14 @@ static void set_common_curl_stuff(CURL* easy) {
   }
 
   if (ftpfs.tryutf8) {
-    // We'll let the slist leak, as it will still be accessible within
-    // libcurl. If we ever want to add more commands to CURLOPT_QUOTE, we'll
-    // have to think of a better strategy.
+    /* We'll let the slist leak, as it will still be accessible within
+       libcurl. If we ever want to add more commands to CURLOPT_QUOTE, we'll
+       have to think of a better strategy. */
     struct curl_slist *slist = NULL;
 
-    // Adding the QUOTE here will make this command be sent with every request.
-    // This is necessary to ensure that the server is still in UTF8 mode after
-    // we get disconnected and automatically reconnect.
+    /* Adding the QUOTE here will make this command be sent with every request.
+       This is necessary to ensure that the server is still in UTF8 mode after
+       we get disconnected and automatically reconnect. */
     slist = curl_slist_append(slist, "OPTS UTF8 ON");
     curl_easy_setopt_or_die(easy, CURLOPT_QUOTE, slist);
   }
@@ -1730,12 +1735,12 @@ int main(int argc, char** argv) {
   CURL* easy;
   char *tmp;
 
-  // Initialize curl library before we are a multithreaded program
+  /* Initialize curl library before we are a multithreaded program */
   curl_global_init(CURL_GLOBAL_ALL);
 
   memset(&ftpfs, 0, sizeof(ftpfs));
 
-  // Set some default values
+  /* Set some default values */
   ftpfs.curl_version = curl_version_info(CURLVERSION_NOW);
   ftpfs.safe_nobody = ftpfs.curl_version->version_num > CURLFTPFS_BAD_NOBODY;
   ftpfs.blksize = 4096;
@@ -1805,7 +1810,7 @@ int main(int argc, char** argv) {
   ftpfs.connection = easy;
   pthread_mutex_init(&ftpfs.lock, NULL);
 
-  // Set the filesystem name to show the current server
+  /* Set the filesystem name to show the current server */
   tmp = g_strdup_printf("-ofsname=curlftpfs#%s", ftpfs.host);
   fuse_opt_insert_arg(&args, 1, tmp);
   g_free(tmp);

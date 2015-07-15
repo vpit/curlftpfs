@@ -26,7 +26,7 @@ AC_CHECK_FUNC([fuse_opt_parse], [have_fuse_opt_parse=yes])
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h netinet/in.h stdint.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h netinet/in.h stdint.h stdlib.h string.h unistd.h linux/limits.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

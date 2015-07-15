@@ -9,6 +9,15 @@
     See the file COPYING.
 */
 
+#ifdef HAVE_LINUX_LIMITS_H
+#include <linux/limits.h>
+#else
+#include <limits.h>
+#endif
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <pthread.h>
