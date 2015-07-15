@@ -706,7 +706,7 @@ static int test_exists(const char* path)
   return ftpfs_getattr(path, &sbuf);
 }
 
-static __off_t test_size(const char* path)
+static off_t test_size(const char* path)
 {
   struct stat sbuf;
   int err = ftpfs_getattr(path, &sbuf);
@@ -968,7 +968,7 @@ static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
 }
 
 static int ftpfs_truncate(const char* path, off_t offset) {
-  __off_t size;
+  off_t size;
 
   DEBUG(1, "ftpfs_truncate: %s len=%lld\n", path, (long long) offset);
   /* we can't use ftpfs_mknod here, because we don't know the right permissions */
@@ -990,7 +990,7 @@ static int ftpfs_truncate(const char* path, off_t offset) {
 
 static int ftpfs_ftruncate(const char * path , off_t offset, struct fuse_file_info * fi)
 {
-  __off_t size;
+  off_t size;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
 
   DEBUG(1, "ftpfs_ftruncate: %s len=%lld\n", path, (long long) offset);
