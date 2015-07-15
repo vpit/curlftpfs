@@ -211,7 +211,7 @@ static void cancel_previous_multi(void)
   ftpfs.attached_to_multi = 0;
 }
 
-static int op_return(int err, char * operation)
+static int op_return(int err, const char * operation)
 {
   if(!err)
   {
