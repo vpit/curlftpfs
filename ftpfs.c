@@ -462,7 +462,7 @@ static void set_common_curl_stuff(CURL* easy);
 
 static size_t write_data_bg(void *ptr, size_t size, size_t nmemb, void *data) {
   struct ftpfs_file *fh = data;
-  unsigned to_copy = size * nmemb;
+  size_t to_copy = size * nmemb;
 
   if (!fh->isready) {
     sem_post(&fh->ready);
@@ -480,7 +480,7 @@ static size_t write_data_bg(void *ptr, size_t size, size_t nmemb, void *data) {
   if (fh->eof)
     return 0;
 
-  DEBUG(2, "write_data_bg: %d %zu\n", to_copy, fh->stream_buf.len);
+  DEBUG(2, "write_data_bg: %zu %zu\n", to_copy, fh->stream_buf.len);
   if (to_copy > fh->stream_buf.len)
     to_copy = fh->stream_buf.len;
 
