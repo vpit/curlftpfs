@@ -42,23 +42,24 @@ char *url_encode(char *str) {
 }
 
 char* get_file_name(const char* path) {
+  char *ret, *encoded;
   const char* filename = strrchr(path, '/');
   if (filename == NULL) filename = path;
   else ++filename;
 
-  char* ret = strdup(filename);
+  ret = strdup(filename);
   if (ftpfs.codepage) {
     convert_charsets(ftpfs.iocharset, ftpfs.codepage, &ret);
   }
 
-  char* encoded = url_encode(ret);
+  encoded = url_encode(ret);
   free(ret);
 
   return encoded;
 }
 
 char* get_full_path(const char* path) {
-  char* ret;
+  char *ret, *encoded;
   char* converted_path = NULL;
 
   ++path;
@@ -73,14 +74,14 @@ char* get_full_path(const char* path) {
 
   free(converted_path);
 
-  char* encoded = url_encode(ret);
+  encoded = url_encode(ret);
   free(ret);
 
   return encoded;
 }
 
 char* get_fulldir_path(const char* path) {
-  char* ret;
+  char *ret, *encoded;
   char* converted_path = NULL;
 
   ++path;
@@ -95,14 +96,14 @@ char* get_fulldir_path(const char* path) {
 
   free(converted_path);
 
-  char* encoded = url_encode(ret);
+  encoded = url_encode(ret);
   free(ret);
 
   return encoded;
 }
 
 char* get_dir_path(const char* path) {
-  char* ret;
+  char *ret, *encoded;
   char* converted_path = NULL;
   const char *lastdir;
 
@@ -126,7 +127,7 @@ char* get_dir_path(const char* path) {
 
   free(converted_path);
 
-  char* encoded = url_encode(ret);
+  encoded = url_encode(ret);
   free(ret);
 
   return encoded;
