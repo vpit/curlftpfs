@@ -503,7 +503,6 @@ static void *ftpfs_write_thread(void *data) {
   
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_URL, fh->full_path);
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_UPLOAD, 1);
-  curl_easy_setopt_or_die(fh->write_conn, CURLOPT_INFILESIZE, -1);
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_READFUNCTION, write_data_bg);
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_READDATA, fh);
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_LOW_SPEED_LIMIT, 1);
@@ -615,6 +614,8 @@ static void free_ftpfs_file(struct ftpfs_file *fh) {
   sem_destroy(&fh->data_need);
   sem_destroy(&fh->data_written);
   sem_destroy(&fh->ready);
+  if (fh->buf.size) { buf_free(&fh->buf); }
+  if (fh->stream_buf.size) { buf_free(&fh->stream_buf); }
   free(fh);
 }
 
@@ -1625,9 +1626,10 @@ static void set_common_curl_stuff(CURL* easy) {
   }
 
   if (ftpfs.no_verify_hostname) {
-    /* The default is 2 which verifies even the host string. This sets to 1
-     * which means verify the host but not the string. */
-    curl_easy_setopt_or_die(easy, CURLOPT_SSL_VERIFYHOST, 1);
+  /* The default is 2 which verifies even the host string. When the value
+   * is 0, the connection succeeds regardless of the names in the certificate.
+   * http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTSSLVERIFYHOST */
+    curl_easy_setopt_or_die(easy, CURLOPT_SSL_VERIFYHOST, 0);
   }
 
   curl_easy_setopt_or_die(easy, CURLOPT_INTERFACE, ftpfs.interface);
