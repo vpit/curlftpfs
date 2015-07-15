@@ -193,7 +193,7 @@ static struct ftpfs_file *get_ftpfs_file(struct fuse_file_info *fi)
   return (struct ftpfs_file *) (uintptr_t) fi->fh;
 }
 
-static void cancel_previous_multi()
+static void cancel_previous_multi(void)
 {
   /* curl_multi_cleanup(ftpfs.multi); */
 
@@ -320,7 +320,7 @@ static int ftpfs_getattr(const char* path, struct stat* sbuf) {
 }
 
 
-static int check_running() {
+static int check_running(void) {
   int running_handles = 0;
   curl_multi_perform(ftpfs.multi, &running_handles);
   return running_handles;
