@@ -19,10 +19,12 @@ endif
 
 noinst_LIBRARIES = libcurlftpfs.a
 
-libcurlftpfs_a_SOURCES = cache.c cache.h \
-			 ftpfs-ls.c ftpfs-ls.h \
-			 charset_utils.c charset_utils.h \
-			 path_utils.c path_utils.h ftpfs.h
+libcurlftpfs_a_SOURCES = \
+  cache.c cache.h \
+  ftpfs-ls.c ftpfs-ls.h \
+  charset_utils.c charset_utils.h \
+  path_utils.c path_utils.h \
+  ftpfs.h
 
 check: test
 

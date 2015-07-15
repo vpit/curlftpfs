@@ -15,7 +15,7 @@ PKG_CHECK_MODULES(FUSE, [fuse >= 2.2])
 
 LIBCURL_CHECK_CONFIG([yes], [7.17.0], [], [AC_MSG_ERROR(["libcurl not found"])])
 if test "$libcurl_protocol_FTP" != yes; then
-	AC_MSG_ERROR(["We need libcurl with support for FTP protocol."])
+   AC_MSG_ERROR(["We need libcurl with support for FTP protocol."])
 fi
 
 CFLAGS="$CFLAGS -Wall -W -Wno-sign-compare -D_REENTRANT $GLIB_CFLAGS $FUSE_CFLAGS $LIBCURL_CPPFLAGS"
@@ -58,7 +58,7 @@ AC_CHECK_FUNCS([ftruncate getpass memmove memset mkdir realpath rmdir select str
 AM_ICONV
 
 if test "$have_fuse_opt_parse" = no; then
-	CFLAGS="$CFLAGS -Icompat -I../compat"
+   CFLAGS="$CFLAGS -Icompat -I../compat"
 fi
 AM_CONDITIONAL(FUSE_OPT_COMPAT, test "$have_fuse_opt_parse" = no)
 
