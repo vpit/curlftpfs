@@ -44,6 +44,8 @@ static int parse_dir_unix(const char *line,
   char month[4];
   char day[3];
   char year[6];
+  char *link_marker;
+  int i;
   char date[20];
   struct tm tm;
   time_t tt;
@@ -82,13 +84,13 @@ static int parse_dir_unix(const char *line,
   }
 #undef SPACES
 
-  char *link_marker = strstr(file, " -> ");
+  link_marker = strstr(file, " -> ");
   if (link_marker) {
     strcpy(link, link_marker + 4);
     *link_marker = '\0';
   }
 
-  int i = 0;
+  i = 0;
   if (mode[i] == 'd') {
     sbuf->st_mode |= S_IFDIR;
   } else if (mode[i] == 'l') {
@@ -220,6 +222,7 @@ int parse_dir(const char* list, const char* dir,
 
   while ((end = strchr(start, '\n')) != NULL) {
     char* line;
+    int res;
 
     memset(&stat_buf, 0, sizeof(stat_buf));
 
@@ -235,21 +238,22 @@ int parse_dir(const char* list, const char* dir,
     }
 
     file[0] = link[0] = '\0';
-    int res = parse_dir_unix(line, &stat_buf, file, link) ||
-              parse_dir_win(line, &stat_buf, file, link) ||
-              parse_dir_netware(line, &stat_buf, file, link);
+    res = parse_dir_unix(line, &stat_buf, file, link) ||
+          parse_dir_win(line, &stat_buf, file, link) ||
+          parse_dir_netware(line, &stat_buf, file, link);
 
     if (res) {
       char *full_path = g_strdup_printf("%s%s", dir, file);
 
       if (link[0]) {
         char *reallink;
+        int linksize;
         if (link[0] == '/' && ftpfs.symlink_prefix_len) {
           reallink = g_strdup_printf("%s%s", ftpfs.symlink_prefix, link);
         } else {
           reallink = g_strdup(link);
         }
-        int linksize = strlen(reallink);
+        linksize = strlen(reallink);
         if (cache.on) {
           cache_add_link(full_path, reallink, linksize+1);
           DEBUG(1, "cache_add_link: %s %s\n", full_path, reallink);
