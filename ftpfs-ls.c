@@ -56,7 +56,7 @@ static int parse_dir_unix(const char *line,
 #define SPACES "%*[ \t]"
   res = sscanf(line,
                "%11s"
-               "%lu"  SPACES
+               "%ld"  SPACES
                "%32s" SPACES
                "%32s" SPACES
                "%llu" SPACES
