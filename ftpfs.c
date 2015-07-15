@@ -126,7 +126,7 @@ struct ftpfs_file {
 enum {
   KEY_HELP,
   KEY_VERBOSE,
-  KEY_VERSION,
+  KEY_VERSION
 };
 
 #define FTPFS_OPT(t, p, v) { t, offsetof(struct ftpfs, p), v }
