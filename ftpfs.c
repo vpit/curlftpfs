@@ -339,7 +339,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
   struct ftpfs_file* fh = get_ftpfs_file(fi);
 
   DEBUG(2, "ftpfs_read_chunk: %s %p %zu %lld %p %p\n",
-        full_path, rbuf, size, (long long) offset, fi, fh);
+        full_path, rbuf, size, (long long) offset, (void *) fi, (void *) fh);
 
   pthread_mutex_lock(&ftpfs.lock);
 
@@ -356,7 +356,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
       CURLMcode curlMCode;
 
       DEBUG(1, "We need to restart the connection %p\n", ftpfs.connection);
-      DEBUG(2, "current_fh=%p fh=%p\n", ftpfs.current_fh, fh);
+      DEBUG(2, "current_fh=%p fh=%p\n", (void *) ftpfs.current_fh, (void *) fh);
       DEBUG(2, "buf.begin_offset=%lld offset=%lld\n", (long long) fh->buf.begin_offset, (long long) offset);
 
       buf_clear(&fh->buf);
