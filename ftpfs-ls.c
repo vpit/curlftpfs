@@ -217,8 +217,8 @@ int parse_dir(const char* list, const char* dir,
     return 0;
   }
 
-  file = (char *)malloc(1024*sizeof(char));
-  link = (char *)malloc(1024*sizeof(char));
+  file = malloc(1024);
+  link = malloc(1024);
 
   while ((end = strchr(start, '\n')) != NULL) {
     char* line;
@@ -228,7 +228,7 @@ int parse_dir(const char* list, const char* dir,
 
     if (end > start && *(end-1) == '\r') end--;
 
-    line = (char*)malloc(end - start + 1);
+    line = malloc(end - start + 1);
     strncpy(line, start, end - start);
     line[end - start] = '\0';
     start = *end == '\r' ? end + 2 : end + 1;

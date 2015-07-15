@@ -723,7 +723,7 @@ static int ftpfs_open_common(const char* path, mode_t mode,
   char * flagsAsStr = flags_to_string(fi->flags);
   DEBUG(2, "ftpfs_open_common: %s\n", flagsAsStr);
 
-  fh = (struct ftpfs_file*) malloc(sizeof(struct ftpfs_file));
+  fh = malloc(sizeof *fh);
 
   memset(fh, 0, sizeof(*fh));
   buf_init(&fh->buf);

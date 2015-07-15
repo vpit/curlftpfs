@@ -32,7 +32,7 @@ int convert_charsets(const char* from, const char* to, char** str) {
     ibl = strlen(s) + 1;
     ib = s;
     obl = MB_LEN_MAX * ibl;
-    buf = (char*)malloc(obl * sizeof(char));
+    buf = malloc(obl);
     ob = buf;
 
     do {
