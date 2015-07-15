@@ -18,28 +18,36 @@
 
 struct ftpfs ftpfs;
 
+#define check_numeric_is(got, expected, fmt, cast) \
+  do { \
+    if ((got) != (expected)) { \
+      fprintf(stderr, "Test failed: expected %" fmt ", got %" fmt "\n", (cast) (expected), (cast) (got)); \
+      assert((got) == (expected)); \
+    } \
+  } while (0)
+
 #define check(sbuf, dev, ino, mode, nlink, uid, gid, \
               rdev, size, blksize, blocks, date) \
   do { \
-  struct tm _tm; \
-  time_t _tt; \
-  memset(&_tm, 0, sizeof(_tm)); \
-  strptime(date, "%H:%M:%S %d/%m/%Y", &_tm); \
-  _tt = mktime(&_tm); \
-  assert(sbuf.st_dev == (dev)); \
-  assert(sbuf.st_ino == (ino)); \
-  assert(sbuf.st_mode == (mode)); \
-  assert(sbuf.st_nlink == (nlink)); \
-  assert(sbuf.st_uid == (uid)); \
-  assert(sbuf.st_gid == (gid)); \
-  assert(sbuf.st_rdev == (rdev)); \
-  assert(sbuf.st_size == (size)); \
-  assert(sbuf.st_blksize == (blksize)); \
-  assert(sbuf.st_blocks == (blocks)); \
-  assert(sbuf.st_atime == _tt); \
-  assert(sbuf.st_ctime == _tt); \
-  assert(sbuf.st_mtime == _tt); \
-  } while (0);
+    struct tm _tm; \
+    time_t _tt; \
+    memset(&_tm, 0, sizeof(_tm)); \
+    strptime(date, "%H:%M:%S %d/%m/%Y", &_tm); \
+    _tt = mktime(&_tm); \
+    check_numeric_is(sbuf.st_dev,     (dev),     "lld", long long); \
+    check_numeric_is(sbuf.st_ino,     (ino),     "lld", long long); \
+    check_numeric_is(sbuf.st_mode,    (mode),    "lld", long long); \
+    check_numeric_is(sbuf.st_nlink,   (nlink),   "lld", long long); \
+    check_numeric_is(sbuf.st_uid,     (uid),     "lld", long long); \
+    check_numeric_is(sbuf.st_gid,     (gid),     "lld", long long); \
+    check_numeric_is(sbuf.st_rdev,    (rdev),    "lld", long long); \
+    check_numeric_is(sbuf.st_size,    (size),    "lld", long long); \
+    check_numeric_is(sbuf.st_blksize, (blksize), "lld", long long); \
+    check_numeric_is(sbuf.st_blocks,  (blocks),  "lld", long long); \
+    check_numeric_is(sbuf.st_atime,   _tt,       "lld", long long); \
+    check_numeric_is(sbuf.st_ctime,   _tt,       "lld", long long); \
+    check_numeric_is(sbuf.st_mtime,   _tt,       "lld", long long); \
+  } while (0)
 
 int main(int argc, char **argv) {
   const char *list;
