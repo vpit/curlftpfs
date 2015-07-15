@@ -679,7 +679,7 @@ static int ftpfs_chmod(const char* path, mode_t mode);
 
 static char * flags_to_string(int flags)
 {
-  char * access_mode_str = NULL;
+  const char * access_mode_str = NULL;
   if ((flags & O_ACCMODE) == O_WRONLY)
     access_mode_str = "O_WRONLY";
   else if ((flags & O_ACCMODE) == O_RDWR)
