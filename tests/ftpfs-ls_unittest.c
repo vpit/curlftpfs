@@ -21,11 +21,11 @@ struct ftpfs ftpfs;
 #define check(sbuf, dev, ino, mode, nlink, uid, gid, \
               rdev, size, blksize, blocks, date) \
   do { \
-  struct tm tm; \
-  time_t tt; \
-  memset(&tm, 0, sizeof(tm)); \
-  strptime(date, "%H:%M:%S %d/%m/%Y", &tm); \
-  tt = mktime(&tm); \
+  struct tm _tm; \
+  time_t _tt; \
+  memset(&_tm, 0, sizeof(_tm)); \
+  strptime(date, "%H:%M:%S %d/%m/%Y", &_tm); \
+  _tt = mktime(&_tm); \
   assert(sbuf.st_dev == (dev)); \
   assert(sbuf.st_ino == (ino)); \
   assert(sbuf.st_mode == (mode)); \
@@ -36,9 +36,9 @@ struct ftpfs ftpfs;
   assert(sbuf.st_size == (size)); \
   assert(sbuf.st_blksize == (blksize)); \
   assert(sbuf.st_blocks == (blocks)); \
-  assert(sbuf.st_atime == tt); \
-  assert(sbuf.st_ctime == tt); \
-  assert(sbuf.st_mtime == tt); \
+  assert(sbuf.st_atime == _tt); \
+  assert(sbuf.st_ctime == _tt); \
+  assert(sbuf.st_mtime == _tt); \
   } while (0);
 
 int main(int argc, char **argv) {
