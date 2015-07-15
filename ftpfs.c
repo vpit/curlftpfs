@@ -203,7 +203,7 @@ static void cancel_previous_multi(void)
   DEBUG(1, "cancel previous multi\n");
 
   curlMCode = curl_multi_remove_handle(ftpfs.multi, ftpfs.connection);
-  if (curlMCode != CURLE_OK)
+  if (curlMCode != CURLM_OK)
   {
       fprintf(stderr, "curl_multi_remove_handle problem: %d\n", curlMCode);
       exit(1);
@@ -374,7 +374,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
       }
 
       curlMCode = curl_multi_add_handle(ftpfs.multi, ftpfs.connection);
-      if (curlMCode != CURLE_OK)
+      if (curlMCode != CURLM_OK)
       {
           fprintf(stderr, "curl_multi_add_handle problem: %d\n", curlMCode);
           exit(1);
