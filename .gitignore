@@ -24,3 +24,5 @@ Makefile.in
 *.la
 
 curlftpfs
+
+tests/ftpfs-ls_unittest
