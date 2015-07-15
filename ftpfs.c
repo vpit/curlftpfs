@@ -195,13 +195,14 @@ static struct ftpfs_file *get_ftpfs_file(struct fuse_file_info *fi)
 
 static void cancel_previous_multi(void)
 {
+  CURLMcode curlMCode;
   /* curl_multi_cleanup(ftpfs.multi); */
 
   if (!ftpfs.attached_to_multi) return;
 
   DEBUG(1, "cancel previous multi\n");
 
-  CURLMcode curlMCode = curl_multi_remove_handle(ftpfs.multi, ftpfs.connection);
+  curlMCode = curl_multi_remove_handle(ftpfs.multi, ftpfs.connection);
   if (curlMCode != CURLE_OK)
   {
       fprintf(stderr, "curl_multi_remove_handle problem: %d\n", curlMCode);
@@ -224,8 +225,9 @@ static int op_return(int err, char * operation)
 
 static size_t write_data(void *ptr, size_t size, size_t nmemb, void *data) {
   struct ftpfs_file* fh = (struct ftpfs_file*)data;
+  size_t to_copy;
   if (fh == NULL) return 0;
-  size_t to_copy = size * nmemb;
+  to_copy = size * nmemb;
   if (to_copy > fh->buf.len - fh->copied) {
     to_copy = fh->buf.len - fh->copied;
   }
@@ -260,10 +262,10 @@ static int ftpfs_getdir(const char* path, fuse_cache_dirh_t h,
                         fuse_cache_dirfil_t filler) {
   int err = 0;
   CURLcode curl_res;
+  struct buffer buf;
   char* dir_path = get_fulldir_path(path);
 
   DEBUG(1, "ftpfs_getdir: %s\n", dir_path);
-  struct buffer buf;
   buf_init(&buf);
 
   pthread_mutex_lock(&ftpfs.lock);
@@ -290,10 +292,11 @@ static int ftpfs_getdir(const char* path, fuse_cache_dirh_t h,
 static int ftpfs_getattr(const char* path, struct stat* sbuf) {
   int err;
   CURLcode curl_res;
+  struct buffer buf;
+  char* name;
   char* dir_path = get_dir_path(path);
 
   DEBUG(2, "ftpfs_getattr: %s dir_path=%s\n", path, dir_path);
-  struct buffer buf;
   buf_init(&buf);
 
   pthread_mutex_lock(&ftpfs.lock);
@@ -308,7 +311,7 @@ static int ftpfs_getattr(const char* path, struct stat* sbuf) {
   }
   buf_null_terminate(&buf);
 
-  char* name = strrchr(path, '/');
+  name = strrchr(path, '/');
   ++name;
   err = parse_dir((char*)buf.p, dir_path + strlen(ftpfs.host) - 1,
                   name, sbuf, NULL, 0, NULL, NULL);
@@ -332,6 +335,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
                                int update_offset) {
   int running_handles = 0;
   int err = 0;
+  size_t to_copy;
   struct ftpfs_file* fh = get_ftpfs_file(fi);
 
   DEBUG(2, "ftpfs_read_chunk: %s %p %zu %lld %p %p\n",
@@ -349,6 +353,8 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
         offset < fh->buf.begin_offset ||
         offset > fh->buf.begin_offset + fh->buf.len ||
         !check_running()) {
+      CURLMcode curlMCode;
+
       DEBUG(1, "We need to restart the connection %p\n", ftpfs.connection);
       DEBUG(2, "current_fh=%p fh=%p\n", ftpfs.current_fh, fh);
       DEBUG(2, "buf.begin_offset=%lld offset=%lld\n", fh->buf.begin_offset, offset);
@@ -367,7 +373,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
         curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_RANGE, range);
       }
 
-      CURLMcode curlMCode =  curl_multi_add_handle(ftpfs.multi, ftpfs.connection);
+      curlMCode = curl_multi_add_handle(ftpfs.multi, ftpfs.connection);
       if (curlMCode != CURLE_OK)
       {
           fprintf(stderr, "curl_multi_add_handle problem: %d\n", curlMCode);
@@ -425,7 +431,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
     }
   }
 
-  size_t to_copy = fh->buf.len + fh->buf.begin_offset - offset;
+  to_copy = fh->buf.len + fh->buf.begin_offset - offset;
   size = size > to_copy ? to_copy : size;
   if (rbuf) {
     memcpy(rbuf, fh->buf.p + offset - fh->buf.begin_offset, size);
@@ -501,6 +507,7 @@ int write_thread_ctr = 0;
 static void *ftpfs_write_thread(void *data) {
   struct ftpfs_file *fh = data;
   char range[15];
+  CURLcode curl_res;
 
   DEBUG(2, "enter streaming write thread #%d path=%s pos=%lld\n", ++write_thread_ctr, fh->full_path, fh->pos);
 
@@ -527,7 +534,7 @@ static void *ftpfs_write_thread(void *data) {
     /*curl_easy_setopt_or_die(fh->write_conn, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)fh->pos); */
   }
 
-  CURLcode curl_res = curl_easy_perform(fh->write_conn);
+  curl_res = curl_easy_perform(fh->write_conn);
 
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_UPLOAD, 0);
 
@@ -626,6 +633,7 @@ static void free_ftpfs_file(struct ftpfs_file *fh) {
 }
 
 static int buffer_file(struct ftpfs_file *fh) {
+  CURLcode curl_res;
   /* If we want to write to the file, we have to load it all at once,
      modify it in memory and then upload it as a whole as most FTP servers
      don't support resume for uploads. */
@@ -633,7 +641,7 @@ static int buffer_file(struct ftpfs_file *fh) {
   cancel_previous_multi();
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, fh->full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &fh->buf);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   pthread_mutex_unlock(&ftpfs.lock);
 
   if (curl_res != 0) {
@@ -646,7 +654,7 @@ static int buffer_file(struct ftpfs_file *fh) {
 static int create_empty_file(const char * path)
 {
   int err = 0;
-
+  CURLcode curl_res;
   char *full_path = get_full_path(path);
 
   pthread_mutex_lock(&ftpfs.lock);
@@ -655,7 +663,7 @@ static int create_empty_file(const char * path)
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_INFILESIZE, 0);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_UPLOAD, 1);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_READDATA, NULL);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_UPLOAD, 0);
   pthread_mutex_unlock(&ftpfs.lock);
 
@@ -706,12 +714,12 @@ static __off_t test_size(const char* path)
 static int ftpfs_open_common(const char* path, mode_t mode,
                              struct fuse_file_info* fi) {
   
+  int err = 0;
+  struct ftpfs_file* fh;
   char * flagsAsStr = flags_to_string(fi->flags);
   DEBUG(2, "ftpfs_open_common: %s\n", flagsAsStr);
-  int err = 0;
 
-  struct ftpfs_file* fh =
-    (struct ftpfs_file*) malloc(sizeof(struct ftpfs_file));
+  fh = (struct ftpfs_file*) malloc(sizeof(struct ftpfs_file));
 
   memset(fh, 0, sizeof(*fh));
   buf_init(&fh->buf);
@@ -737,10 +745,11 @@ static int ftpfs_open_common(const char* path, mode_t mode,
     if (fi->flags & O_CREAT) {
       err = ftpfs_mknod(path, (mode & 07777) | S_IFREG, 0);
     } else {
+      size_t size;
       /* If it's read-only, we can load the file a bit at a time, as necessary*/
       DEBUG(1, "opening %s O_RDONLY\n", path);
       fh->can_shrink = 1;
-      size_t size = ftpfs_read_chunk(fh->full_path, NULL, 1, 0, fi, 0);
+      size = ftpfs_read_chunk(fh->full_path, NULL, 1, 0, fi, 0);
 
       if (size == CURLFTPFS_BAD_READ) {
         DEBUG(1, "initial read failed size=%d\n", size);
@@ -762,16 +771,17 @@ static int ftpfs_open_common(const char* path, mode_t mode,
 
     if ((fi->flags & O_APPEND))
     {
-    DEBUG(1, "opening %s with O_APPEND - not supported!\n", path);
-    err = -ENOTSUP;
+      DEBUG(1, "opening %s with O_APPEND - not supported!\n", path);
+      err = -ENOTSUP;
     }
 
     if ((fi->flags & O_EXCL))
     {
-    DEBUG(1, "opening %s with O_EXCL - testing existence\n", path);
-    int exists_r = test_exists(path);
-    if (exists_r != -ENOENT)
-      err = -EACCES;
+      int exists_r;
+      DEBUG(1, "opening %s with O_EXCL - testing existence\n", path);
+      exists_r = test_exists(path);
+      if (exists_r != -ENOENT)
+        err = -EACCES;
     }
 
     if (!err)
@@ -830,6 +840,8 @@ static int ftpfs_create(const char* path, mode_t mode,
 static int ftpfs_read(const char* path, char* rbuf, size_t size, off_t offset,
                       struct fuse_file_info* fi) {
   int ret;
+  char *full_path;
+  size_t size_read;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
 
   DEBUG(1, "ftpfs_read: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, fh->pos);
@@ -840,8 +852,8 @@ static int ftpfs_read(const char* path, char* rbuf, size_t size, off_t offset,
     return op_return(-EIO, "ftpfs_read");
   }
 
-  char *full_path = get_full_path(path);
-  size_t size_read = ftpfs_read_chunk(full_path, rbuf, size, offset, fi, 1);
+  full_path = get_full_path(path);
+  size_read = ftpfs_read_chunk(full_path, rbuf, size, offset, fi, 1);
   free(full_path);
   if (size_read == CURLFTPFS_BAD_READ) {
     ret = -EIO;
@@ -854,9 +866,9 @@ static int ftpfs_read(const char* path, char* rbuf, size_t size, off_t offset,
 }
 
 static int ftpfs_mknod(const char* path, mode_t mode, dev_t rdev) {
-  (void) rdev;
-
   int err = 0;
+
+  (void) rdev;
 
   DEBUG(1, "ftpfs_mknode: mode=%d\n", (int)mode);
 
@@ -877,6 +889,7 @@ static int ftpfs_chmod(const char* path, mode_t mode) {
   /* We can only process a subset of the mode - so strip to supported subset */
   int mode_c = mode - (mode / 0x1000 * 0x1000);
 
+  CURLcode curl_res;
   struct curl_slist* header = NULL;
   char* full_path = get_dir_path(path);
   char* filename = get_file_name(path);
@@ -892,7 +905,7 @@ static int ftpfs_chmod(const char* path, mode_t mode) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -912,8 +925,7 @@ static int ftpfs_chmod(const char* path, mode_t mode) {
 static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
   int err = 0;
 
-  DEBUG(1, "ftpfs_chown: %d %d\n", (int)uid, (int)gid);
-
+  CURLcode curl_res;
   struct curl_slist* header = NULL;
   char* full_path = get_dir_path(path);
   char* filename = get_file_name(path);
@@ -921,6 +933,8 @@ static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
   char* cmd2 = g_strdup_printf("SITE CHGID %i %s", gid, filename);
   struct buffer buf;
   buf_init(&buf);
+
+  DEBUG(1, "ftpfs_chown: %d %d\n", (int)uid, (int)gid);
 
   header = curl_slist_append(header, cmd);
   header = curl_slist_append(header, cmd2);
@@ -931,7 +945,7 @@ static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -950,13 +964,15 @@ static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
 }
 
 static int ftpfs_truncate(const char* path, off_t offset) {
+  __off_t size;
+
   DEBUG(1, "ftpfs_truncate: %s len=%lld\n", path, offset);
   /* we can't use ftpfs_mknod here, because we don't know the right permissions */
   if (offset == 0) return op_return(create_empty_file(path), "ftpfs_truncate");
 
   /* fix openoffice problem, truncating exactly to file length */
 
-  __off_t size = (long long int)test_size(path);
+  size = (long long int)test_size(path);
   DEBUG(1, "ftpfs_truncate: %s check filesize=%lld\n", path, (long long int)size);
 
   if (offset == size)
@@ -970,9 +986,10 @@ static int ftpfs_truncate(const char* path, off_t offset) {
 
 static int ftpfs_ftruncate(const char * path , off_t offset, struct fuse_file_info * fi)
 {
-  DEBUG(1, "ftpfs_ftruncate: %s len=%lld\n", path, offset);
+  __off_t size;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
 
+  DEBUG(1, "ftpfs_ftruncate: %s len=%lld\n", path, offset);
   if (offset == 0)
   {
    if (fh->pos == 0)
@@ -984,7 +1001,7 @@ static int ftpfs_ftruncate(const char * path , off_t offset, struct fuse_file_in
   }
   /* fix openoffice problem, truncating exactly to file length */
 
-  __off_t size = test_size(path);
+  size = test_size(path);
   DEBUG(1, "ftpfs_ftruncate: %s check filesize=%lld\n", path, (long long int)size);
 
   if (offset == size)
@@ -1003,6 +1020,7 @@ static int ftpfs_utime(const char* path, struct utimbuf* time) {
 
 static int ftpfs_rmdir(const char* path) {
   int err = 0;
+  CURLcode curl_res;
   struct curl_slist* header = NULL;
   char* full_path = get_dir_path(path);
   char* filename = get_file_name(path);
@@ -1021,7 +1039,7 @@ static int ftpfs_rmdir(const char* path) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -1040,6 +1058,7 @@ static int ftpfs_rmdir(const char* path) {
 
 static int ftpfs_mkdir(const char* path, mode_t mode) {
   int err = 0;
+  CURLcode curl_res;
   struct curl_slist* header = NULL;
   char* full_path = get_dir_path(path);
   char* filename = get_file_name(path);
@@ -1055,7 +1074,7 @@ static int ftpfs_mkdir(const char* path, mode_t mode) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -1078,6 +1097,7 @@ static int ftpfs_mkdir(const char* path, mode_t mode) {
 
 static int ftpfs_unlink(const char* path) {
   int err = 0;
+  CURLcode curl_res;
   struct curl_slist* header = NULL;
   char* full_path = get_dir_path(path);
   char* filename = get_file_name(path);
@@ -1093,7 +1113,7 @@ static int ftpfs_unlink(const char* path) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, full_path);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -1112,8 +1132,9 @@ static int ftpfs_unlink(const char* path) {
 
 static int ftpfs_write(const char *path, const char *wbuf, size_t size,
                        off_t offset, struct fuse_file_info *fi) {
-  (void) path;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
+
+  (void) path;
 
   DEBUG(1, "ftpfs_write: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, fh->pos);
 
@@ -1125,6 +1146,7 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
 
   if (!fh->write_conn && fh->pos == 0 && offset == 0)
   {
+    int success;
     DEBUG(1, "ftpfs_write: starting a streaming write at pos=%lld\n", fh->pos);
 
     /* check if the file has been truncated to zero or has been newly created */
@@ -1138,21 +1160,22 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
       }
     }
 
-  int success = start_write_thread(fh);
+    success = start_write_thread(fh);
     if (!success)
     {
       return op_return(-EIO, "ftpfs_write");
     }
     sem_wait(&fh->ready);
-  sem_post(&fh->data_need);
+    sem_post(&fh->data_need);
   }
 
   if (!fh->write_conn && fh->pos >0 && offset == fh->pos)
   {
+    int success;
     /* resume a streaming write */
     DEBUG(1, "ftpfs_write: resuming a streaming write at pos=%lld\n", fh->pos);
 
-    int success = start_write_thread(fh);
+    success = start_write_thread(fh);
     if (!success)
     {
       return op_return(-EIO, "ftpfs_write");
@@ -1205,10 +1228,10 @@ static int ftpfs_flush(const char *path, struct fuse_file_info *fi) {
   DEBUG(1, "ftpfs_flush: buf.len=%zu buf.pos=%lld write_conn=%d\n", fh->buf.len, fh->pos, fh->write_conn!=0);
 
   if (fh->write_conn) {
+    struct stat sbuf;
+
     err = finish_write_thread(fh);
     if (err) return op_return(err, "ftpfs_flush");
-
-    struct stat sbuf;
 
     /* check if the resulting file has the correct size
      this is important, because we use APPE for continuing
@@ -1241,9 +1264,8 @@ static int ftpfs_fsync(const char *path, int isdatasync,
 }
 
 static int ftpfs_release(const char* path, struct fuse_file_info* fi) {
-
-  DEBUG(1, "ftpfs_release %s\n", path);
   struct ftpfs_file* fh = get_ftpfs_file(fi);
+  DEBUG(1, "ftpfs_release %s\n", path);
   ftpfs_flush(path, fi);
   pthread_mutex_lock(&ftpfs.lock);
   if (ftpfs.current_fh == fh) {
@@ -1262,13 +1284,15 @@ static int ftpfs_release(const char* path, struct fuse_file_info* fi) {
 
 
 static int ftpfs_rename(const char* from, const char* to) {
-  DEBUG(1, "ftpfs_rename from %s to %s\n", from, to);
   int err = 0;
+  CURLcode curl_res;
   char* rnfr = g_strdup_printf("RNFR %s", from + 1);
   char* rnto = g_strdup_printf("RNTO %s", to + 1);
+  struct curl_slist* header = NULL;
   struct buffer buf;
   buf_init(&buf);
-  struct curl_slist* header = NULL;
+
+  DEBUG(1, "ftpfs_rename from %s to %s\n", from, to);
 
   if (ftpfs.codepage) {
     convert_charsets(ftpfs.iocharset, ftpfs.codepage, &rnfr);
@@ -1284,7 +1308,7 @@ static int ftpfs_rename(const char* from, const char* to) {
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_URL, ftpfs.host);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_WRITEDATA, &buf);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, ftpfs.safe_nobody);
-  CURLcode curl_res = curl_easy_perform(ftpfs.connection);
+  curl_res = curl_easy_perform(ftpfs.connection);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_POSTQUOTE, NULL);
   curl_easy_setopt_or_die(ftpfs.connection, CURLOPT_NOBODY, 0);
   pthread_mutex_unlock(&ftpfs.lock);
@@ -1304,10 +1328,11 @@ static int ftpfs_rename(const char* from, const char* to) {
 static int ftpfs_readlink(const char *path, char *linkbuf, size_t size) {
   int err;
   CURLcode curl_res;
+  char *name;
   char* dir_path = get_dir_path(path);
+  struct buffer buf;
 
   DEBUG(2, "dir_path: %s %s\n", path, dir_path);
-  struct buffer buf;
   buf_init(&buf);
 
   pthread_mutex_lock(&ftpfs.lock);
@@ -1322,7 +1347,7 @@ static int ftpfs_readlink(const char *path, char *linkbuf, size_t size) {
   }
   buf_null_terminate(&buf);
 
-  char* name = strrchr(path, '/');
+  name = strrchr(path, '/');
   ++name;
   err = parse_dir((char*)buf.p, dir_path + strlen(ftpfs.host) - 1,
                   name, NULL, linkbuf, size, NULL, NULL);
@@ -1584,6 +1609,8 @@ static void set_common_curl_stuff(CURL* easy) {
    * with version 7.15.4 */
   if (ftpfs.use_ssl > CURLFTPSSL_TRY &&
       ftpfs.curl_version->version_num <= CURLFTPFS_BAD_SSL) {
+    int i;
+    const int time_to_wait = 10;
     fprintf(stderr,
 "WARNING: you are using libcurl %s.\n"
 "This version of libcurl does not respect the mandatory SSL flag.\n"
@@ -1591,8 +1618,6 @@ static void set_common_curl_stuff(CURL* easy) {
 "SSL. Please upgrade to libcurl version 7.15.4 or higher.\n"
 "You can abort the connection now by pressing ctrl+c.\n",
             ftpfs.curl_version->version);
-    int i;
-    const int time_to_wait = 10;
     for (i = 0; i < time_to_wait; i++) {
       fprintf(stderr, "%d.. ", time_to_wait - i);
       sleep(1);
