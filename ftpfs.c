@@ -756,7 +756,7 @@ static int ftpfs_open_common(const char* path, mode_t mode,
       size = ftpfs_read_chunk(fh->full_path, NULL, 1, 0, fi, 0);
 
       if (size == CURLFTPFS_BAD_READ) {
-        DEBUG(1, "initial read failed size=%d\n", size);
+        DEBUG(1, "initial read failed size=%zu\n", size);
         err = -EACCES;
       }
     }
