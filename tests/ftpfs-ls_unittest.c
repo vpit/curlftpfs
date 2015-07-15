@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   assert(!strcmp(linkbuf, "Science/molbio"));
   check(sbuf, 0, 0, S_IFLNK|S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH, 1, 0, 0, 0, 14, 4096, 8, "00:00:00 12/03/2004");
 
-  // Test a date six months in the past
+  /* Test a date six months in the past */
   test_tm = tm;
   test_tm.tm_mon -= 6;
   if (test_tm.tm_mon < 0) {
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   assert(err == 0);
   check(sbuf, 0, 0, S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH, 2, 0, 0, 0, 512, 4096, 8, "00:00:00 08/04/1994");
 
-  // Test a date a little bit in the past
+  /* Test a date a little bit in the past */
   test_tm = tm;
   strftime(line, 256,
            "----------  1 robson users   1803128 %b %d 00:00 ls-lR.Z\r\n",
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
   strftime(date, 20, "00:00:00 %d/%m/%Y", &test_tm);
   check(sbuf, 0, 0, S_IFREG, 1, 0, 0, 0, 1803128, 4096, 3528, date);
 
-  // Test a file with space
+  /* Test a file with space */
   list = "-rw-r--r--  1 robson users   1803128 Jan 01  2001  test\r\n";
   err = parse_dir(list, "/", " test", &sbuf, NULL, 0, NULL, NULL);
   assert(err == 0);
