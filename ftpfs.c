@@ -339,11 +339,11 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
   struct ftpfs_file* fh = get_ftpfs_file(fi);
 
   DEBUG(2, "ftpfs_read_chunk: %s %p %zu %lld %p %p\n",
-        full_path, rbuf, size, offset, fi, fh);
+        full_path, rbuf, size, (long long) offset, fi, fh);
 
   pthread_mutex_lock(&ftpfs.lock);
 
-  DEBUG(2, "buffer size: %zu %lld\n", fh->buf.len, fh->buf.begin_offset);
+  DEBUG(2, "buffer size: %zu %lld\n", fh->buf.len, (long long) fh->buf.begin_offset);
 
   if ((fh->buf.len < size + offset - fh->buf.begin_offset) ||
       offset < fh->buf.begin_offset ||
@@ -357,7 +357,7 @@ static size_t ftpfs_read_chunk(const char* full_path, char* rbuf,
 
       DEBUG(1, "We need to restart the connection %p\n", ftpfs.connection);
       DEBUG(2, "current_fh=%p fh=%p\n", ftpfs.current_fh, fh);
-      DEBUG(2, "buf.begin_offset=%lld offset=%lld\n", fh->buf.begin_offset, offset);
+      DEBUG(2, "buf.begin_offset=%lld offset=%lld\n", (long long) fh->buf.begin_offset, (long long) offset);
 
       buf_clear(&fh->buf);
       fh->buf.begin_offset = offset;
@@ -508,7 +508,7 @@ static void *ftpfs_write_thread(void *data) {
   struct ftpfs_file *fh = data;
   CURLcode curl_res;
 
-  DEBUG(2, "enter streaming write thread #%d path=%s pos=%lld\n", ++write_thread_ctr, fh->full_path, fh->pos);
+  DEBUG(2, "enter streaming write thread #%d path=%s pos=%lld\n", ++write_thread_ctr, fh->full_path, (long long) fh->pos);
 
 
   curl_easy_setopt_or_die(fh->write_conn, CURLOPT_URL, fh->full_path);
@@ -848,7 +848,7 @@ static int ftpfs_read(const char* path, char* rbuf, size_t size, off_t offset,
   size_t size_read;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
 
-  DEBUG(1, "ftpfs_read: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, fh->pos);
+  DEBUG(1, "ftpfs_read: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, (long long) fh->pos);
 
   if (fh->pos>0 || fh->write_conn!=NULL)
   {
@@ -970,7 +970,7 @@ static int ftpfs_chown(const char* path, uid_t uid, gid_t gid) {
 static int ftpfs_truncate(const char* path, off_t offset) {
   __off_t size;
 
-  DEBUG(1, "ftpfs_truncate: %s len=%lld\n", path, offset);
+  DEBUG(1, "ftpfs_truncate: %s len=%lld\n", path, (long long) offset);
   /* we can't use ftpfs_mknod here, because we don't know the right permissions */
   if (offset == 0) return op_return(create_empty_file(path), "ftpfs_truncate");
 
@@ -993,7 +993,7 @@ static int ftpfs_ftruncate(const char * path , off_t offset, struct fuse_file_in
   __off_t size;
   struct ftpfs_file *fh = get_ftpfs_file(fi);
 
-  DEBUG(1, "ftpfs_ftruncate: %s len=%lld\n", path, offset);
+  DEBUG(1, "ftpfs_ftruncate: %s len=%lld\n", path, (long long) offset);
   if (offset == 0)
   {
    if (fh->pos == 0)
@@ -1140,7 +1140,7 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
 
   (void) path;
 
-  DEBUG(1, "ftpfs_write: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, fh->pos);
+  DEBUG(1, "ftpfs_write: %s size=%zu offset=%lld has_write_conn=%d pos=%lld\n", path, size, (long long) offset, fh->write_conn!=0, (long long) fh->pos);
 
   if (fh->write_fail_cause != CURLE_OK)
   {
@@ -1151,7 +1151,7 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
   if (!fh->write_conn && fh->pos == 0 && offset == 0)
   {
     int success;
-    DEBUG(1, "ftpfs_write: starting a streaming write at pos=%lld\n", fh->pos);
+    DEBUG(1, "ftpfs_write: starting a streaming write at pos=%lld\n", (long long) fh->pos);
 
     /* check if the file has been truncated to zero or has been newly created */
     if (!fh->write_may_start)
@@ -1177,7 +1177,7 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
   {
     int success;
     /* resume a streaming write */
-    DEBUG(1, "ftpfs_write: resuming a streaming write at pos=%lld\n", fh->pos);
+    DEBUG(1, "ftpfs_write: resuming a streaming write at pos=%lld\n", (long long) fh->pos);
 
     success = start_write_thread(fh);
     if (!success)
@@ -1229,7 +1229,7 @@ static int ftpfs_flush(const char *path, struct fuse_file_info *fi) {
   int err = 0;
   struct ftpfs_file* fh = get_ftpfs_file(fi);
 
-  DEBUG(1, "ftpfs_flush: buf.len=%zu buf.pos=%lld write_conn=%d\n", fh->buf.len, fh->pos, fh->write_conn!=0);
+  DEBUG(1, "ftpfs_flush: buf.len=%zu buf.pos=%lld write_conn=%d\n", fh->buf.len, (long long) fh->pos, fh->write_conn!=0);
 
   if (fh->write_conn) {
     struct stat sbuf;
@@ -1246,7 +1246,7 @@ static int ftpfs_flush(const char *path, struct fuse_file_info *fi) {
     if (sbuf.st_size != fh->pos)
     {
       fh->write_fail_cause = -999;
-      fprintf(stderr, "ftpfs_flush: check filesize problem: size=%lld expected=%lld\n", sbuf.st_size, fh->pos);
+      fprintf(stderr, "ftpfs_flush: check filesize problem: size=%lld expected=%lld\n", (long long) sbuf.st_size, (long long) fh->pos);
       return op_return(-EIO, "ftpfs_flush");
     }
 
