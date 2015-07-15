@@ -147,7 +147,7 @@ void cache_add_attr(const char *path, const struct stat *stbuf)
     } else {
       node->not_found = 1;
     }
-    node->stat_valid = time(NULL) + cache.stat_timeout;
+    node->stat_valid = now + cache.stat_timeout;
     if (node->stat_valid > node->valid)
         node->valid = node->stat_valid;
     cache_clean();
@@ -165,7 +165,7 @@ void cache_add_dir(const char *path, char **dir)
     g_strfreev(node->dir);
     node->dir = dir;
     node->not_found = 0;
-    node->dir_valid = time(NULL) + cache.dir_timeout;
+    node->dir_valid = now + cache.dir_timeout;
     if (node->dir_valid > node->valid)
         node->valid = node->dir_valid;
     cache_clean();
@@ -190,7 +190,7 @@ void cache_add_link(const char *path, const char *link, size_t size)
     g_free(node->link);
     node->link = g_strndup(link, my_strnlen(link, size-1));
     node->not_found = 0;
-    node->link_valid = time(NULL) + cache.link_timeout;
+    node->link_valid = now + cache.link_timeout;
     if (node->link_valid > node->valid)
         node->valid = node->link_valid;
     cache_clean();
