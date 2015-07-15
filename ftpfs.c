@@ -251,8 +251,8 @@ static size_t read_data(void *ptr, size_t size, size_t nmemb, void *data) {
 
 #define curl_easy_setopt_or_die(handle, option, ...) \
   do {\
-    CURLcode res = curl_easy_setopt(handle, option, __VA_ARGS__);\
-    if (res != CURLE_OK) {\
+    CURLcode _res = curl_easy_setopt(handle, option, __VA_ARGS__);\
+    if (_res != CURLE_OK) {\
       fprintf(stderr, "Error setting curl: %s\n", error_buf);\
       exit(1);\
     }\
@@ -1152,10 +1152,10 @@ static int ftpfs_write(const char *path, const char *wbuf, size_t size,
     /* check if the file has been truncated to zero or has been newly created */
     if (!fh->write_may_start)
     {
-      long long size = (long long int)test_size(path);
-      if (size != 0)
+      long long path_size = (long long int)test_size(path);
+      if (path_size != 0)
       {
-        fprintf(stderr, "ftpfs_write: start writing with no previous truncate not allowed! size check rval=%lld\n", size);
+        fprintf(stderr, "ftpfs_write: start writing with no previous truncate not allowed! size check rval=%lld\n", path_size);
         return op_return(-EIO, "ftpfs_write");
       }
     }
