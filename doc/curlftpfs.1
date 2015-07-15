@@ -33,7 +33,7 @@ Print curlftpfs, libcurl and fuse versions.
 .B \-o
 Options are specified with a
 .B \-o
-flag followed by a comma separated string of options. 
+flag followed by a comma separated string of options.
 .RS
 .TP
 .B cacert=<file>
@@ -101,7 +101,7 @@ Tell curlftpfs to enable the use of the EPSV command when doing passive FTP
 transfers. Curlftpfs will first attempt to use EPSV before PASV.
 .TP
 .B engine=<name>
-Select  the  OpenSSL crypto engine to use for cipher operations.  Use: 
+Select  the  OpenSSL crypto engine to use for cipher operations.  Use:
 .br
 .B "curl \-\-engine list"
 .br
@@ -124,7 +124,7 @@ deep hierarchies this means very many commands. This is how RFC1738 says it
 should be done. This is the default but the slowest behavior.
 .IP singlecwd
 curlftpfs does one CWD with the full target directory and then operates on the
-file \&"normally" (like in the multicwd case). 
+file \&"normally" (like in the multicwd case).
 .RE
 .TP
 .B ftp_port=<address>
@@ -222,7 +222,7 @@ exact same way as the proxy environment  variables,  including protocol prefix
 (http://) and embedded user + password.
 .TP
 .B proxytunnel
-Tells curlftpfs to use a tunnel proxy. This option is implied by the 
+Tells curlftpfs to use a tunnel proxy. This option is implied by the
 \fBproxy\fP option but you need to set it manually if you use the \fIproxy\fP
 environment variable.
 .TP
@@ -291,7 +291,7 @@ Specify  user  and  password  to  use for server authentication.  Overrides
 netrc configuration.
 .TP
 .B utf8
-Try to transfer file list with UTF-8 encoding. Send OPTS UTF8 ON at the  
+Try to transfer file list with UTF-8 encoding. Send OPTS UTF8 ON at the
 beginning of file list transfer.
 .SH FUSE OPTIONS
 .TP
@@ -310,7 +310,7 @@ Disable multi-threaded operation.
 .B \-o
 Options are specified with a
 .B \-o
-flag followed by a comma separated string of options. 
+flag followed by a comma separated string of options.
 .RS
 .TP
 .B allow_other

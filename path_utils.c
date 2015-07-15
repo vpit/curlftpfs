@@ -29,7 +29,7 @@ char *url_encode(char *str) {
     if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~'
       || *pstr == ':' || *pstr == '/')
       *pbuf++ = *pstr;
-    else 
+    else
       *pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
     pstr++;
   }
@@ -46,7 +46,7 @@ char* get_file_name(const char* path) {
   if (ftpfs.codepage) {
     convert_charsets(ftpfs.iocharset, ftpfs.codepage, &ret);
   }
-  
+
   char* encoded = url_encode(ret);
   free(ret);
 
@@ -56,7 +56,7 @@ char* get_file_name(const char* path) {
 char* get_full_path(const char* path) {
   char* ret;
   char* converted_path = NULL;
-  
+
   ++path;
 
   if (ftpfs.codepage && strlen(path)) {
@@ -103,7 +103,7 @@ char* get_dir_path(const char* path) {
   const char *lastdir;
 
   ++path;
-  
+
   lastdir = strrchr(path, '/');
   if (lastdir == NULL) lastdir = path;
 

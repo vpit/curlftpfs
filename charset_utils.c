@@ -53,6 +53,6 @@ int convert_charsets(const char* from, const char* to, char** str) {
   } else {
     DEBUG(2, "iconv_open return error %d\n", errno);
   }
-  
+
   return 0;
 }

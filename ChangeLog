@@ -20,11 +20,11 @@ bump configure.ac version 0.9.2; requires libcurl >=7.17.0
 mail2nob
 
 Apr 23, 2008 	
-add Makefile.cvs 
+add Makefile.cvs
 mail2nob
 
 Apr 23, 2008
-patch by Miklos Szeredi: fixes 'du' for files >= 4GB. 
+patch by Miklos Szeredi: fixes 'du' for files >= 4GB.
 mail2nob
 
 Jan 31, 2008

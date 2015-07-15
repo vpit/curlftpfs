@@ -7,7 +7,7 @@
 */
 
 #define _XOPEN_SOURCE 600  /* glibc2 needs this */
-#include <time.h>                                                        
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
