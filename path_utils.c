@@ -47,8 +47,10 @@ char* get_file_name(const char* path) {
     convert_charsets(ftpfs.iocharset, ftpfs.codepage, &ret);
   }
   
-  ret=url_encode(ret);
-  return ret;
+  char* encoded = url_encode(ret);
+  free(ret);
+
+  return encoded;
 }
 
 char* get_full_path(const char* path) {
@@ -67,8 +69,10 @@ char* get_full_path(const char* path) {
 
   free(converted_path);
 
-  ret=url_encode(ret);
-  return ret;
+  char* encoded = url_encode(ret);
+  free(ret);
+
+  return encoded;
 }
 
 char* get_fulldir_path(const char* path) {
@@ -87,8 +91,10 @@ char* get_fulldir_path(const char* path) {
 
   free(converted_path);
 
-  ret=url_encode(ret);
-  return ret;
+  char* encoded = url_encode(ret);
+  free(ret);
+
+  return encoded;
 }
 
 char* get_dir_path(const char* path) {
@@ -116,6 +122,8 @@ char* get_dir_path(const char* path) {
 
   free(converted_path);
 
-  ret=url_encode(ret);
-  return ret;
+  char* encoded = url_encode(ret);
+  free(ret);
+
+  return encoded;
 }
