@@ -6,6 +6,10 @@
     See the file COPYING.LIB
 */
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
+#endif
+
 #include "fuse_opt.h"
 
 #include <stdio.h>
