@@ -23,6 +23,9 @@ Makefile.in
 *.a
 *.la
 
+*.log
+*.swp
+
 curlftpfs
 
 tests/ftpfs-ls_unittest
