@@ -1759,6 +1759,7 @@ int main(int argc, char** argv) {
   curl_global_cleanup();
   fuse_opt_free_args(&args);
 
+  pthread_mutex_destroy(&ftpfs.lock);
   cache_deinit();
 
   return res;
