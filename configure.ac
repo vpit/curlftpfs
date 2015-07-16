@@ -63,4 +63,5 @@ fi
 AM_CONDITIONAL(FUSE_OPT_COMPAT, test "$have_fuse_opt_parse" = no)
 
 AC_CONFIG_FILES([Makefile compat/Makefile tests/Makefile doc/Makefile])
+AC_CONFIG_MACRO_DIR([m4])
 AC_OUTPUT
