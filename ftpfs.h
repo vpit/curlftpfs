@@ -9,19 +9,21 @@
     See the file COPYING.
 */
 
+#include "config.h"
+
 #ifdef HAVE_LINUX_LIMITS_H
-#include <linux/limits.h>
+#  include <linux/limits.h>
 #else
-#include <limits.h>
+#  include <limits.h>
 #endif
 #ifndef PATH_MAX
-#define PATH_MAX 1024
+#  define PATH_MAX 1024
 #endif
 
+#include <fuse.h>
 #include <curl/curl.h>
 #include <curl/easy.h>
-#include <pthread.h>
-#include <pthread.h>
+#include <pthread.h> /* <pthread_mutex_t> */
 
 struct ftpfs {
   char* host;
@@ -80,14 +82,34 @@ struct ftpfs {
 
 extern struct ftpfs ftpfs;
 
+extern struct fuse_cache_operations ftpfs_oper;
+
 #define DEBUG(level, args...) \
-        do { if (level <= ftpfs.debug) {\
-               int _l = 0; \
-               while (++_l < level) fprintf(stderr, " "); \
-               fprintf(stderr, "%ld ", time(NULL));\
-               fprintf(stderr, __FILE__ ":%d ", __LINE__);\
-               fprintf(stderr, args);\
-             }\
-           } while(0)
+  do { if (level <= ftpfs.debug) { \
+    int _l = 0; \
+    while (++_l < level) fprintf(stderr, " "); \
+      fprintf(stderr, "%ld ", time(NULL)); \
+      fprintf(stderr, __FILE__ ":%d ", __LINE__); \
+      fprintf(stderr, args); \
+    } \
+  } while (0)
+
+#define CURLFTPFS_BAD_NOBODY 0x070f02
+#define CURLFTPFS_BAD_SSL    0x070f03
+
+#define CURLFTPFS_BAD_READ   ((size_t)-1)
+
+void cancel_previous_multi(void);
+void set_common_curl_stuff(CURL* easy);
+
+void ftpfs_curl_easy_setopt_abort(void);
+
+#define curl_easy_setopt_or_die(handle, option, ...) \
+  do { \
+    if (curl_easy_setopt(handle, option, __VA_ARGS__) != CURLE_OK) \
+      ftpfs_curl_easy_setopt_abort(); \
+  } while (0)
+
+void ftpfs_curl_easy_perform_abort(void);
 
 #endif   /* __CURLFTPFS_FTPFS_H__ */

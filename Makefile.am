@@ -12,7 +12,7 @@ AM_LDFLAGS = $(LIBICONV)
 
 bin_PROGRAMS = curlftpfs
 
-curlftpfs_SOURCES = ftpfs.c
+curlftpfs_SOURCES = main.c
 if FUSE_OPT_COMPAT
 curlftpfs_LDADD = libcurlftpfs.a compat/libcompat.la
 else
@@ -24,7 +24,7 @@ noinst_LIBRARIES = libcurlftpfs.a
 libcurlftpfs_a_SOURCES = \
   cache.c cache.h \
   charset_utils.c charset_utils.h \
-  ftpfs.h \
+  ftpfs.c ftpfs.h \
   ftpfs-ls.c ftpfs-ls.h \
   passwd.c passwd.h \
   path_utils.c path_utils.h
