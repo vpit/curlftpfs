@@ -25,7 +25,7 @@ struct cache {
     time_t last_cleaned;
 };
 
-struct cache cache;
+static struct cache cache;
 
 struct node {
     struct stat stat;
@@ -527,6 +527,10 @@ struct fuse_operations *cache_init(struct fuse_cache_operations *oper)
         }
     }
     return &cache_oper;
+}
+
+int cache_enabled(void) {
+    return cache.on;
 }
 
 static const struct fuse_opt cache_opts[] = {

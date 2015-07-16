@@ -257,7 +257,7 @@ int parse_dir(const char* list, const char* dir,
           reallink = g_strdup(link);
         }
         linksize = strlen(reallink);
-        if (cache.on) {
+        if (cache_enabled()) {
           cache_add_link(full_path, reallink, linksize+1);
           DEBUG(1, "cache_add_link: %s %s\n", full_path, reallink);
         }
@@ -273,7 +273,7 @@ int parse_dir(const char* list, const char* dir,
         DEBUG(1, "filler: %s\n", file);
         filler(h, file, &stat_buf);
       } else {
-        if (cache.on) {
+        if (cache_enabled()) {
           DEBUG(1, "cache_add_attr: %s\n", full_path);
           cache_add_attr(full_path, &stat_buf);
         }
