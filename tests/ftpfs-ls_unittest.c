@@ -152,5 +152,7 @@ int main(int argc, char **argv) {
   assert(err == 0);
   check(sbuf, 0, 0, S_IFREG|S_IRUSR|S_IWUSR, 1, 0, 0, 0, 6561177600LL, 4096, 12814800, "00:00:00 15/10/2005");
 
+  fuse_opt_free_args(&args);
+
   return 0;
 }
