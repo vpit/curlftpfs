@@ -1682,12 +1682,12 @@ int main(int argc, char** argv) {
   ftpfs.attached_to_multi = 0;
 
   if (fuse_opt_parse(&args, &ftpfs, ftpfs_opts, ftpfs_opt_proc) == -1)
-    exit(1);
+    return 1;
 
   if (!ftpfs.host) {
     fprintf(stderr, "missing host\n");
     fprintf(stderr, "see `%s -h' for usage\n", argv[0]);
-    exit(1);
+    return 1;
   }
 
   if (!ftpfs.iocharset) {
@@ -1701,12 +1701,12 @@ int main(int argc, char** argv) {
   easy = curl_easy_init();
   if (easy == NULL) {
     fprintf(stderr, "Error initializing libcurl\n");
-    exit(1);
+    return 1;
   }
 
   res = cache_parse_options(&args);
   if (res == -1)
-    exit(1);
+    return 1;
 
   if (!prompt_passwd("host",  &ftpfs.user))
     return 1;
@@ -1716,7 +1716,7 @@ int main(int argc, char** argv) {
 
   if (ftpfs.transform_symlinks && !ftpfs.mountpoint) {
     fprintf(stderr, "cannot transform symlinks: no mountpoint given\n");
-    exit(1);
+    return 1;
   }
   if (!ftpfs.transform_symlinks)
     ftpfs.symlink_prefix_len = 0;
@@ -1724,7 +1724,7 @@ int main(int argc, char** argv) {
     ftpfs.symlink_prefix_len = strlen(ftpfs.symlink_prefix);
   else {
     perror("unable to normalize mount path");
-    exit(1);
+    return 1;
   }
 
   set_common_curl_stuff(easy);
@@ -1733,14 +1733,14 @@ int main(int argc, char** argv) {
   curl_res = curl_easy_perform(easy);
   if (curl_res != 0) {
     fprintf(stderr, "Error connecting to ftp: %s\n", error_buf);
-    exit(1);
+    return 1;
   }
   curl_easy_setopt_or_die(easy, CURLOPT_NOBODY, 0);
 
   ftpfs.multi = curl_multi_init();
   if (ftpfs.multi == NULL) {
     fprintf(stderr, "Error initializing libcurl multi\n");
-    exit(1);
+    return 1;
   }
 
   ftpfs.connection = easy;
