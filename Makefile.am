@@ -22,6 +22,7 @@ endif
 noinst_LIBRARIES = libcurlftpfs.a
 
 libcurlftpfs_a_SOURCES = \
+  buffer.c buffer.h \
   cache.c cache.h \
   charset_utils.c charset_utils.h \
   error.c error.h \
