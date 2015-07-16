@@ -564,15 +564,15 @@ static int start_write_thread(struct ftpfs_file *fh)
     fprintf(stderr, "assert fh->write_conn == NULL failed!\n");
     exit(1);
   }
-  
+
   fh->written_flag=0;
   fh->isready=0;
   fh->eof=0;
   sem_init(&fh->data_avail, 0, 0);
   sem_init(&fh->data_need, 0, 0);
   sem_init(&fh->data_written, 0, 0);
-  sem_init(&fh->ready, 0, 0);  
-  
+  sem_init(&fh->ready, 0, 0);
+
     fh->write_conn = curl_easy_init();
     if (fh->write_conn == NULL) {
       fprintf(stderr, "Error initializing libcurl\n");
@@ -584,7 +584,7 @@ static int start_write_thread(struct ftpfs_file *fh)
       if (err) {
         fprintf(stderr, "failed to create thread: %s\n", strerror(err));
         /* FIXME: destroy curl_easy */
-        return 0;  
+        return 0;
       }
     }
   return 1;
@@ -613,7 +613,7 @@ static int finish_write_thread(struct ftpfs_file *fh)
     if (fh->write_fail_cause != CURLE_OK)
     {
       return -EIO;
-    }  
+    }
     return 0;
 }
 
@@ -673,7 +673,7 @@ static int create_empty_file(const char * path)
 
   if (curl_res != 0) {
     err = -EPERM;
-  }  
+  }
   free(full_path);
   return err;
 }
@@ -690,14 +690,14 @@ static char * flags_to_string(int flags)
     access_mode_str = "O_RDWR";
   else if ((flags & O_ACCMODE) == O_RDONLY)
     access_mode_str = "O_RDONLY";
-  
+
   return g_strdup_printf("access_mode=%s, flags=%s%s%s%s",
       access_mode_str,
       (flags & O_CREAT) ? "O_CREAT " : "",
       (flags & O_TRUNC) ? "O_TRUNC " : "",
       (flags & O_EXCL) ? "O_EXCL " : "",
       (flags & O_APPEND) ? "O_APPEND " : "");
-  
+
 }
 
 static int test_exists(const char* path)
@@ -717,7 +717,7 @@ static off_t test_size(const char* path)
 
 static int ftpfs_open_common(const char* path, mode_t mode,
                              struct fuse_file_info* fi) {
-  
+
   int err = 0;
   struct ftpfs_file* fh;
   char * flagsAsStr = flags_to_string(fi->flags);
@@ -796,7 +796,7 @@ static int ftpfs_open_common(const char* path, mode_t mode,
 
 
         fh->write_may_start=1;
-  
+
           if (start_write_thread(fh))
           {
             sem_wait(&fh->ready);
