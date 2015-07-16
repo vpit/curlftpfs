@@ -27,6 +27,10 @@
 #include <semaphore.h>
 #include <assert.h>
 
+#ifdef HAVE_READPASSPHRASE
+#include <readpassphrase.h>
+#endif
+
 #include "charset_utils.h"
 #include "path_utils.h"
 #include "ftpfs-ls.h"
@@ -1650,34 +1654,52 @@ static void checkpasswd(const char *kind, /* for what purpose */
     return;
 
   ptr = strchr(*userpwd, ':');
-  if(!ptr) {
+  if (!ptr) {
     /* no password present, prompt for one */
-    char *passwd;
-    char prompt[256];
+    char   prompt[256];
+    char  *passwd;
     size_t passwdlen;
-    size_t userlen = strlen(*userpwd);
-    char *passptr;
+    int    free_passwd = 0;
+    size_t userlen;
+    char  *passptr;
 
     /* build a nice-looking prompt */
-    snprintf(prompt, sizeof(prompt),
-        "Enter %s password for user '%s':",
-        kind, *userpwd);
+    snprintf(prompt, sizeof prompt,
+             "Enter %s password for user '%s':",
+             kind, *userpwd);
 
     /* get password */
-    passwd = getpass(prompt);
+#ifdef HAVE_READPASSPHRASE
+    {
+      char passbuf[129];
+      if (!readpassphrase(prompt, passbuf, sizeof passbuf,
+                          RPP_ECHO_OFF|RPP_REQUIRE_TTY))
+        return;
+      passwd      = g_strdup(passbuf);
+      free_passwd = 1;
+      memset(passbuf, 0, sizeof passbuf);
+    }
+#else
+    passwd    = getpass(prompt);
+#endif
     passwdlen = strlen(passwd);
 
     /* extend the allocated memory area to fit the password too */
+    userlen = strlen(*userpwd);
     passptr = realloc(*userpwd,
-        passwdlen + 1 + /* an extra for the colon */
-        userlen + 1);   /* an extra for the zero */
+                      passwdlen + 1 + /* an extra for the colon */
+                      userlen + 1);   /* an extra for the zero */
 
-    if(passptr) {
+    if (passptr) {
       /* append the password separated with a colon */
-      passptr[userlen]=':';
+      passptr[userlen] = ':';
       memcpy(&passptr[userlen+1], passwd, passwdlen+1);
       *userpwd = passptr;
     }
+
+    memset(passwd, 0, passwdlen);
+    if (free_passwd)
+      g_free(passwd);
   }
 }
 

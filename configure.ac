@@ -52,7 +52,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
-AC_CHECK_FUNCS([ftruncate getpass memmove memset mkdir realpath rmdir select strchr strdup strrchr strstr strtoull utime])
+AC_CHECK_FUNCS([ftruncate getpass readpassphrase memmove memset mkdir realpath rmdir select strchr strdup strrchr strstr strtoull utime])
 
 # Check for iconv
 AM_ICONV
