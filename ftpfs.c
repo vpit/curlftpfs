@@ -10,10 +10,6 @@
 #define _XOPEN_SOURCE 600
 #endif
 
-#ifndef HAVE_READPASSPHRASE
-#define _BSD_SOURCE 1 /* Makes getpass() available on glibc */
-#endif
-
 #include "config.h"
 
 #include <stdlib.h>
@@ -31,14 +27,11 @@
 #include <semaphore.h>
 #include <assert.h>
 
-#ifdef HAVE_READPASSPHRASE
-#include <readpassphrase.h>
-#endif
-
 #include "charset_utils.h"
 #include "path_utils.h"
 #include "ftpfs-ls.h"
 #include "cache.h"
+#include "passwd.h"
 #include "ftpfs.h"
 
 #define CURLFTPFS_BAD_NOBODY 0x070f02
@@ -1650,63 +1643,6 @@ static void set_common_curl_stuff(CURL* easy) {
   curl_easy_setopt_or_die(easy, CURLOPT_IPRESOLVE, ftpfs.ip_version);
 }
 
-static void checkpasswd(const char *kind, /* for what purpose */
-                        char **userpwd) /* pointer to allocated string */
-{
-  char *ptr;
-  if(!*userpwd)
-    return;
-
-  ptr = strchr(*userpwd, ':');
-  if (!ptr) {
-    /* no password present, prompt for one */
-    char   prompt[256];
-    char  *passwd;
-    size_t passwdlen;
-    int    free_passwd = 0;
-    size_t userlen;
-    char  *passptr;
-
-    /* build a nice-looking prompt */
-    snprintf(prompt, sizeof prompt,
-             "Enter %s password for user '%s':",
-             kind, *userpwd);
-
-    /* get password */
-#ifdef HAVE_READPASSPHRASE
-    {
-      char passbuf[129];
-      if (!readpassphrase(prompt, passbuf, sizeof passbuf,
-                          RPP_ECHO_OFF|RPP_REQUIRE_TTY))
-        return;
-      passwd      = g_strdup(passbuf);
-      free_passwd = 1;
-      memset(passbuf, 0, sizeof passbuf);
-    }
-#else
-    passwd    = getpass(prompt);
-#endif
-    passwdlen = strlen(passwd);
-
-    /* extend the allocated memory area to fit the password too */
-    userlen = strlen(*userpwd);
-    passptr = realloc(*userpwd,
-                      passwdlen + 1 + /* an extra for the colon */
-                      userlen + 1);   /* an extra for the zero */
-
-    if (passptr) {
-      /* append the password separated with a colon */
-      passptr[userlen] = ':';
-      memcpy(&passptr[userlen+1], passwd, passwdlen+1);
-      *userpwd = passptr;
-    }
-
-    memset(passwd, 0, passwdlen);
-    if (free_passwd)
-      g_free(passwd);
-  }
-}
-
 #if FUSE_VERSION == 25
 static int fuse_opt_insert_arg(struct fuse_args *args, int pos,
                                const char *arg)
@@ -1772,8 +1708,11 @@ int main(int argc, char** argv) {
   if (res == -1)
     exit(1);
 
-  checkpasswd("host", &ftpfs.user);
-  checkpasswd("proxy", &ftpfs.proxy_user);
+  if (!prompt_passwd("host",  &ftpfs.user))
+    return 1;
+
+  if (!prompt_passwd("proxy", &ftpfs.proxy_user))
+    return 1;
 
   if (ftpfs.transform_symlinks && !ftpfs.mountpoint) {
     fprintf(stderr, "cannot transform symlinks: no mountpoint given\n");
