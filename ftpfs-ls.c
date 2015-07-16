@@ -109,6 +109,9 @@ static int parse_dir_unix(const char *line,
   sbuf->st_size = size;
   if (ftpfs.blksize) {
     sbuf->st_blksize = ftpfs.blksize;
+    /* Round size up to the closest multiple of blksize, then divide this by
+     * 512. Requires that 512 divides blksize. This seems to match how Unix
+     * systems initialize this entry. */
     sbuf->st_blocks =
       ((size + ftpfs.blksize - 1) & ~((unsigned long long) ftpfs.blksize - 1)) >> 9;
   }
