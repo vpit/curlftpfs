@@ -84,16 +84,6 @@ extern struct ftpfs ftpfs;
 
 extern struct fuse_cache_operations ftpfs_oper;
 
-#define DEBUG(level, args...) \
-  do { if (level <= ftpfs.debug) { \
-    int _l = 0; \
-    while (++_l < level) fprintf(stderr, " "); \
-      fprintf(stderr, "%ld ", time(NULL)); \
-      fprintf(stderr, __FILE__ ":%d ", __LINE__); \
-      fprintf(stderr, args); \
-    } \
-  } while (0)
-
 #define CURLFTPFS_BAD_NOBODY 0x070f02
 #define CURLFTPFS_BAD_SSL    0x070f03
 

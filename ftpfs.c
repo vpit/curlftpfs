@@ -27,6 +27,7 @@
 #include <semaphore.h>
 #include <assert.h>
 
+#include "error.h"
 #include "charset_utils.h"
 #include "path_utils.h"
 #include "ftpfs-ls.h"

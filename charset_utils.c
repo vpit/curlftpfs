@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#include "error.h"
 #include "ftpfs.h"
 
 int convert_charsets(const char* from, const char* to, char** str) {

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <glib.h>
 
+#include "error.h"
 #include "ftpfs.h"
 #include "charset_utils.h"
 #include "ftpfs-ls.h"

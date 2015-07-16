@@ -24,6 +24,7 @@ noinst_LIBRARIES = libcurlftpfs.a
 libcurlftpfs_a_SOURCES = \
   cache.c cache.h \
   charset_utils.c charset_utils.h \
+  error.c error.h \
   ftpfs.c ftpfs.h \
   ftpfs-ls.c ftpfs-ls.h \
   passwd.c passwd.h \
