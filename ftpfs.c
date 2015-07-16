@@ -10,6 +10,10 @@
 #define _XOPEN_SOURCE 600
 #endif
 
+#ifndef HAVE_READPASSPHRASE
+#define _BSD_SOURCE 1 /* Makes getpass() available on glibc */
+#endif
+
 #include "config.h"
 
 #include <stdlib.h>
