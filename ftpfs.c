@@ -1063,6 +1063,10 @@ static int ftpfs_mkdir(const char *path, mode_t mode) {
   free((void *) cmd);
   free((void *) filename);
 
+  /* XXX Should we propagate the error here? This seems natural, but there are
+   * cases where mkdir(2) may succeed even if the mode is not applied (like on
+   * VFAT, but note that on VFAT chmod(2) also succeeds even though the mode is
+   * not applied). */
   if (!err)
     ftpfs_chmod(path, mode);
 
