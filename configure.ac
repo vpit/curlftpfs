@@ -26,7 +26,7 @@ AC_CHECK_FUNC([fuse_opt_parse], [have_fuse_opt_parse=yes])
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h netinet/in.h stdint.h stdlib.h string.h unistd.h pwd.h linux/limits.h])
+AC_CHECK_HEADERS([fcntl.h netinet/in.h unistd.h pwd.h linux/limits.h netinet/in.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -34,7 +34,6 @@ AC_TYPE_UID_T
 AC_C_INLINE
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
-AC_TYPE_SIZE_T
 AC_CHECK_MEMBERS([struct stat.st_blksize])
 AC_STRUCT_ST_BLOCKS
 AC_CHECK_MEMBERS([struct stat.st_rdev])
@@ -52,7 +51,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
-AC_CHECK_FUNCS([ftruncate getpass readpassphrase memmove memset mkdir realpath rmdir select strchr strdup strrchr strstr strtoull utime])
+AC_CHECK_FUNCS([strdup strtoull ftruncate mkdir realpath rmdir select utime getpass readpassphrase])
 
 # Check for iconv
 AM_ICONV
