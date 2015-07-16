@@ -154,5 +154,7 @@ int main(int argc, char **argv) {
 
   fuse_opt_free_args(&args);
 
+  cache_deinit();
+
   return 0;
 }

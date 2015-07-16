@@ -533,6 +533,16 @@ int cache_enabled(void) {
     return cache.on;
 }
 
+void cache_deinit(void) {
+    pthread_mutex_lock(&cache.lock);
+    cache.on = 0;
+    g_hash_table_destroy(cache.table);
+    cache.table = NULL;
+    pthread_mutex_unlock(&cache.lock);
+    pthread_mutex_destroy(&cache.lock);
+    return;
+}
+
 static const struct fuse_opt cache_opts[] = {
     { "cache=yes", offsetof(struct cache, on), 1 },
     { "cache=no", offsetof(struct cache, on), 0 },
